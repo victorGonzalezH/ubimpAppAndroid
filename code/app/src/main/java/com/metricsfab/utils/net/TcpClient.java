@@ -89,6 +89,23 @@ public class TcpClient
     }
 
 
+
+    public int connect(String hostName, int port, boolean debug) throws IOException
+    {
+        try
+        {
+            this.hostName = hostName;
+            this.port = port;
+            return this.connect();
+        }
+        catch (Exception ex)
+        {
+            throw  ex;
+        }
+
+    }
+
+
     public int connect() throws IOException
     {
         try
