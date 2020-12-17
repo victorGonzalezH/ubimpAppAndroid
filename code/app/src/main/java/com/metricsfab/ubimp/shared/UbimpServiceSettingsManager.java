@@ -1,4 +1,4 @@
-package com.metricsfab.ubimp;
+package com.metricsfab.ubimp.shared;
 
 
 import android.content.Context;
@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 
 public class UbimpServiceSettingsManager
 {
+    public static final String env = "dev";
 
     public static final String PLAY_SERVICES_PACKAGE_NAME = "com.google.android.gms";
 
@@ -17,19 +18,22 @@ public class UbimpServiceSettingsManager
 
     public static final String APP_NAME_LABEL = "APP_NAME";
 
-    public static final String DEFAULT_HOSTNAME = "www.ubimp.com";
+    public static final String WEB_PROTOCOL_LABEL = "WEB_PROTOCOL";
+    public static final String WEB_PROTOCOL = "https";
 
-    public static final int DEFAULT_HTTPS_PORT = 443;
+    public static final String WEB_HOSTNAME_LABEL = "WEB_HOSTNAME";
+    public static final String WEB_HOSTNAME = "192.168.1.88";
 
-    public static final int DEFAULT_TCP_PORT = 49371;
+    public static final String WEB_PORT_LABEL = "WEB_PORT";
+    public static final String WEB_PORT = "3000";
+
+    public static final String TCP_PORT_LABEL = "TCP_PORT";
+    public static final String TCP_PORT = "49371";
 
     public static final long FASTEST_UPDATE_INTERVAL_DEFAULT = 5000L;
 
     public static final String FASTEST_UPDATE_INTERVAL_LABEL = "FASTEST_UPDATE_INTERVAL";
 
-    public static final String HOSTNAME_LABEL = "HOSTNAME";
-
-    public static final String HTTPS_PORT_LABEL = "HTTPS_PORT";
 
     public static final String IMEI_DOUBLE_LABEL = "IMEI_DOUBLE";
 
@@ -41,15 +45,13 @@ public class UbimpServiceSettingsManager
 
     public static final String REGISTERED_VALUE_LABEL = "REGISTERED_VALUE";
 
-    public static final String TCP_PORT_LABEL = "TCP_PORT";
-
     public static final int TIME_BETWEEN_SENDING_TCP_DATA_IN_MILISECONDS_DEFAULT = 500;
 
     public static final String TIME_BETWEEN_SENDING_TCP_DATA_IN_MILISECONDS_LABEL = "TIME_BETWEEN_SENDING_TCP_DATA_IN_MILISECONDS";
 
-    public static final String UBIMP_SERVICE_SETTINGS = "UBIMP_SERVICE_SETTINGS";
+    public static final String UBIMP_SERVICE_SETTINGS_VALUE = "UBIMP_SERVICE_SETTINGS";
 
-    public static final String UBIMP_SERVICE_SETTINGS_LABEL = "SERVICE_SETTINGS";
+    public static final String UBIMP_SERVICE_SETTINGS_LABEL = "UBIMP_SERVICE_SETTINGS";
 
     public static final long UPDATE_INTERVAL_DEFAULT = 10000L;
 

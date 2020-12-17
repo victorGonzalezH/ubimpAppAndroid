@@ -10,9 +10,8 @@ import android.util.Log;
 public class SMSReceiver extends BroadcastReceiver {
     private String appName;
 
-    private ReceiveListener listener = null;
+    private SMSReceiveListener listener = null;
 
-    public SMSReceiver() {}
 
     public SMSReceiver(String paramString) {
         this.appName = paramString;
@@ -20,24 +19,27 @@ public class SMSReceiver extends BroadcastReceiver {
     }
 
     public void onReceive(Context paramContext, Intent paramIntent) {
-        if (paramIntent.getAction() == "android.provider.Telephony.SMS_RECEIVED" && this.listener != null) {
+        if (paramIntent.getAction().equals("android.provider.Telephony.SMS_RECEIVED") && this.listener != null) {
             Bundle bundle = paramIntent.getExtras();
             if (bundle != null) {
                 Object[] arrayOfObject = (Object[])bundle.get("pdus");
                 if (arrayOfObject != null && arrayOfObject.length > 0) {
                     SmsMessage[] arrayOfSmsMessage = new SmsMessage[arrayOfObject.length];
                     for (byte b = 0; b < arrayOfSmsMessage.length; b++) {
-                        arrayOfSmsMessage[b] = SmsMessage.createFromPdu((byte[])arrayOfObject[b]);
+                        arrayOfSmsMessage[b] = SmsMessage.createFromPdu((byte[])arrayOfObject[b], "3gpp");
                         this.listener.onSmsReceived(arrayOfSmsMessage[b].getDisplayOriginatingAddress(), arrayOfSmsMessage[b].getDisplayMessageBody());
                     }
                 } else {
                     this.listener.onSmsReceived(null, null);
                 }
-                return;
+
             }
             this.listener.onSmsReceived(null, null);
         }
     }
 
-    public void setListener(ReceiveListener paramReceiveListener) { this.listener = paramReceiveListener; }
+    public void setListener(SMSReceiveListener smsListener)
+    {
+        this.listener = smsListener;
+    }
 }

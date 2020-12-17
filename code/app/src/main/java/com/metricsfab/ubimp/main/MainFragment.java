@@ -1,4 +1,4 @@
-package com.metricsfab.ubimp.service;
+package com.metricsfab.ubimp.main;
 
 import android.app.Activity;
 import android.content.Context;

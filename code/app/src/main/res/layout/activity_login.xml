@@ -31,7 +31,8 @@
                 android:layout_weight="1.0"
                 style="@style/Widget.AppCompat.Spinner.Underlined" />
 
-            <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="8.0dip">
+            <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8.0dip">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_gravity="bottom|center"
@@ -57,7 +58,7 @@
                     <EditText android:id="@+id/input_phoneNumber"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/phoneNumber"
+                        android:hint="@string/phoneNumberLabel"
                         android:maxLength="10" android:inputType="phone" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
@@ -67,9 +68,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8.0dip">
                 <EditText android:id="@+id/input_email"
+                    android:gravity="center"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/email"
+                    android:hint="@string/emailLabel"
                     android:inputType="textEmailAddress" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -79,10 +81,12 @@
                 android:layout_marginTop="8.0dip">
 
                 <EditText android:id="@+id/input_password"
+                    android:gravity="center"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/password"
-                    android:inputType="textPassword" />
+                    android:inputType="textPassword"
+                    android:hint="@string/passwordLabelHint"
+                    ></EditText>
             </com.google.android.material.textfield.TextInputLayout>
 
             <androidx.appcompat.widget.AppCompatButton
@@ -91,11 +95,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8.0dip"
-                android:text="@string/register"
+                android:text="@string/activateDeviceLabel"
                 android:textAllCaps="false" />
         </LinearLayout>
-
     </RelativeLayout>
 
 </ScrollView>
-

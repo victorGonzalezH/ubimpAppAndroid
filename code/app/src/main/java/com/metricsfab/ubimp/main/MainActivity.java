@@ -1,4 +1,4 @@
-package com.metricsfab.ubimp.service;
+package com.metricsfab.ubimp.main;
 
 
 import android.app.Activity;
@@ -18,10 +18,10 @@ import androidx.core.content.pm.PackageInfoCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.appbar.AppBarLayout;
-
 import com.google.android.material.navigation.NavigationView;
-import com.metricsfab.ubimp.UbimpServiceSettingsManager;
+import com.metricsfab.ubimp.shared.UbimpServiceSettingsManager;
+import com.metricsfab.ubimp.login.Login;
+import com.metricsfab.ubimp.service.LocationService;
 import com.metricsfab.ubimpservice.R;
 import com.metricsfab.utils.permissions.PermissionsManager;
 import com.metricsfab.utils.playServices.IDialogCancelListener;
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements
                         {
                             this.requestingFineLocationAccess = true;
 
-                            PermissionsManager.requestPermissions(this, this.findViewById(R.id.drawer_layout), "", 0, 0, this.appName, 0);
+                            PermissionsManager.requestPermissions(this, this.findViewById(R.id.drawer_layout), PermissionsManager.ACCESS_FINE_LOCATION, PermissionsManager.ACCESS_FINE_LOCATION_PERMISSION_REQUEST_CODE, R.string.accessFineLocationRationale, this.appName, 0);
                             //this, this.findViewById(R.id.drawer_layout), "android.permission.ACCESS_FINE_LOCATION", 100, 2131230794, 2131624020, "Ubimp Service"
                         }
                         else
@@ -164,11 +164,14 @@ public class MainActivity extends AppCompatActivity implements
     public Intent setLoginItent(Context paramContext, Class<?> paramClass)
     {
         Intent intent = new Intent(paramContext, paramClass);
-        intent.putExtra("APP_NAME", this.appName);
-        intent.putExtra("SERVICE_SETTINGS", "UBIMP_SERVICE_SETTINGS");
-        intent.putExtra("HOSTNAME", "www.ubimp.com");
-        intent.putExtra("HTTPS_PORT", 443);
-        intent.putExtra("TCP_PORT", 49371);
+        intent.putExtra(UbimpServiceSettingsManager.APP_NAME_LABEL, this.appName);
+        intent.putExtra(UbimpServiceSettingsManager.UBIMP_SERVICE_SETTINGS_LABEL, UbimpServiceSettingsManager.UBIMP_SERVICE_SETTINGS_VALUE);
+        intent.putExtra(UbimpServiceSettingsManager.WEB_PROTOCOL_LABEL, UbimpServiceSettingsManager.WEB_PROTOCOL);
+        intent.putExtra(UbimpServiceSettingsManager.WEB_HOSTNAME_LABEL, UbimpServiceSettingsManager.WEB_HOSTNAME);
+        intent.putExtra(UbimpServiceSettingsManager.WEB_PORT_LABEL, UbimpServiceSettingsManager.WEB_PORT);
+
+
+        intent.putExtra(UbimpServiceSettingsManager.TCP_PORT_LABEL, UbimpServiceSettingsManager.TCP_PORT);
         intent.putExtra("UPDATE_INTERVAL", 10000L);
         intent.putExtra("FASTEST_UPDATE_INTERVAL", 5000L);
         intent.putExtra("ACCURACY", 100);

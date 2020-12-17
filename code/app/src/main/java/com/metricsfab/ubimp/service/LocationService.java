@@ -7,11 +7,11 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
+
 import androidx.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
-import com.google.android.gms.common.util.ArrayUtils;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -19,13 +19,11 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import  com.metricsfab.ubimp.UbimpServiceSettingsManager;
+import com.metricsfab.ubimp.shared.UbimpServiceSettingsManager;
 import com.metricsfab.ubimp.models.LocationData;
 import com.metricsfab.utils.net.ITcpMessageListener;
-import com.metricsfab.utils.types.PrimitiveDataUtils;
 import com.metricsfab.utils.net.TcpClient;
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

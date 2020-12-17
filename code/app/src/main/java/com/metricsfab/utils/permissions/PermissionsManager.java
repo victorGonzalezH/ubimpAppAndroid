@@ -18,6 +18,11 @@ public class PermissionsManager
 
     public static final int READ_PHONE_STATE_PERMISSION_REQUEST_CODE     = 300;
 
+    public static final String RECEIVE_SMS_PERMISSION_LABEL = "android.permission.RECEIVE_SMS";
+
+    public static final String READ_PHONE_STATE_PERMISSION_LABEL = "android.permission.READ_PHONE_STATE";
+
+    public static final String ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
 
     public static boolean checkAccessFineLocationPermissions(Context paramContext)
     {
@@ -32,6 +37,12 @@ public class PermissionsManager
     }
 
 
+    /**
+     *
+     * @param paramContext
+     * @param paramString
+     * @return
+     */
     public static boolean checkAccessPermission(Context paramContext, String paramString)
     {
         boolean bool;
@@ -44,8 +55,11 @@ public class PermissionsManager
     }
 
 
-
-
+    /**
+     *
+     * @param paramContext
+     * @return
+     */
     public static boolean checkAccessReadPhoneStatePermissions(Context paramContext)
     {
         boolean bool;
@@ -59,8 +73,16 @@ public class PermissionsManager
     }
 
 
-
-
+    /**
+     *
+     * @param activity
+     * @param view
+     * @param permission
+     * @param request_permissions_request_code
+     * @param rationaleMessageResourceId
+     * @param appName
+     * @param okResourceId
+     */
     public static void requestPermissions(final Activity activity, View view, final String permission, final int request_permissions_request_code, int rationaleMessageResourceId, String appName, int okResourceId)
     {
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission))
