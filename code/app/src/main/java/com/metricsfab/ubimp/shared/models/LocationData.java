@@ -1,4 +1,4 @@
-package com.metricsfab.ubimp.models;
+package com.metricsfab.ubimp.shared.models;
 
 import com.google.android.gms.common.util.ArrayUtils;
 import com.metricsfab.utils.types.PrimitiveDataUtils;
@@ -48,6 +48,20 @@ public class LocationData {
         this.speed = paramFloat;
         this.locationDateTime = paramDate;
         this.changed = paramBoolean;
+    }
+
+
+    /**
+     *
+     * @param latitude Latitud
+     * @param longitude Longitud
+     * @param speed velocidad
+     */
+    public LocationData(double latitude, double longitude, float speed)
+    {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.speed = speed;
     }
 
     public boolean getChanged() { return this.changed; }

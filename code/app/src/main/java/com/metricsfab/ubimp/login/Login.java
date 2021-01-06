@@ -334,7 +334,7 @@ public class Login extends AppCompatActivity implements SMSReceiveListener
                 // Se crea el commando para activar el dispositivo
                 String lang = Locale.getDefault().toString();
                 ActivateDeviceCommand activateDeviceCommand = new ActivateDeviceCommand(imei, vb.inputEmail.getText().toString(), vb.inputPassword.getText().toString(), vb.inputPhoneNumber.getText().toString(), countryId,  lastTimeStampForActivate, lang);
-                // loginService.activateDevice(activateDeviceCommand).enqueue(setActivateDeviceCallback());
+                loginService.activateDevice(activateDeviceCommand).enqueue(setActivateDeviceCallback());
 
             }
         });
@@ -409,7 +409,7 @@ public class Login extends AppCompatActivity implements SMSReceiveListener
         editor.putLong(UbimpServiceSettingsManager.FASTEST_UPDATE_INTERVAL_LABEL, this.fastest_update_interval);
         editor.putInt(UbimpServiceSettingsManager.ACCURACY_LABEL, this.accuracy);
         editor.putInt(UbimpServiceSettingsManager.LOCATION_SERVICE_TYPE_CLASS_LABEL, this.locationServiceTypeClass);
-        editor.putBoolean(UbimpServiceSettingsManager.LOCATION_UPDATES_REQUEST_OF_THE_APP_LABEL, true);
+        editor.putBoolean(UbimpServiceSettingsManager.LOCATION_UPDATES_REQUEST_OF_THE_APP_LABEL, false);
         editor.putLong(UbimpServiceSettingsManager.TIME_BETWEEN_SENDING_TCP_DATA_IN_MILISECONDS_LABEL, Double.doubleToRawLongBits(this.timeBetweenSendingTcpDataInMiliseconds));
         editor.commit();
     }

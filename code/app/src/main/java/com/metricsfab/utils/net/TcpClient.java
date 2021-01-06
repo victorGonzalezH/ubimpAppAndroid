@@ -18,7 +18,7 @@ public class TcpClient
 
     public static final int SEND_SUCCESS = 0;
 
-    public static final int SEND_ERROR = 0;
+    public static final int SEND_ERROR = -1;
 
     public static final int INVALID_SERVER_OR_PORT = 1;
 
@@ -166,17 +166,17 @@ public class TcpClient
         {
             if (this.socket != null && this.socket.isConnected() && this.outputStream != null)
             {
-                //this.outputStreamWriter.wri .write(byteArray, offset, length);
                 this.outputStream.write(byteArray);
                 this.outputStream.flush();
                 this.sendMessageFailureCounter = 0;
-                return SEND_SUCCESS;
+                return byteArray.length;
             }
 
-            return SEND_ERROR;
+            return 0;
         }
         catch (IOException exception)
         {
+            this.isClientConnected = false;
             throw exception;
         }
     }
@@ -204,6 +204,7 @@ public class TcpClient
         }
         catch (Exception ex)
         {
+            this.isClientConnected = false;
             throw  ex;
         }
     }

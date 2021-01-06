@@ -27,6 +27,9 @@ public class UbimpServiceSettingsManager
     public static final String WEB_PORT_LABEL = "WEB_PORT";
     public static final String WEB_PORT = "3000";
 
+    public static final String TCP_HOSTNAME_LABEL   = "TCP_HOSTNAME";
+    public static final String TCP_HOSTNAME         = "192.168.1.88";
+
     public static final String TCP_PORT_LABEL = "TCP_PORT";
     public static final String TCP_PORT = "49371";
 
@@ -77,7 +80,10 @@ public class UbimpServiceSettingsManager
 
     public long getFastestUpdateInterval(long paramLong) { return this.context.getSharedPreferences(this.settingsName, this.mode).getLong("FASTEST_UPDATE_INTERVAL", paramLong); }
 
-    public String getHostNameFromSettings(String paramString) { return this.context.getSharedPreferences(this.settingsName, this.mode).getString("HOSTNAME", paramString); }
+    public String getHostNameFromSettings(String paramString)
+    {
+        return this.context.getSharedPreferences(this.settingsName, this.mode).getString("HOSTNAME", paramString);
+    }
 
     public double getImeiDouble() { return Double.longBitsToDouble(this.context.getSharedPreferences(this.settingsName, this.mode).getLong("IMEI_DOUBLE", Double.doubleToLongBits(0.0D))); }
 

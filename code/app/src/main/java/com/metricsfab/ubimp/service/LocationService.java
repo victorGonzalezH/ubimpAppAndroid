@@ -1,14 +1,24 @@
 package com.metricsfab.ubimp.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Binder;
+import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -19,8 +29,10 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.metricsfab.ubimp.main.MainActivity;
 import com.metricsfab.ubimp.shared.UbimpServiceSettingsManager;
-import com.metricsfab.ubimp.models.LocationData;
+import com.metricsfab.ubimp.shared.models.LocationData;
+import com.metricsfab.ubimpservice.R;
 import com.metricsfab.utils.net.ITcpMessageListener;
 import com.metricsfab.utils.net.TcpClient;
 import java.io.IOException;
@@ -28,11 +40,30 @@ import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class LocationService extends LocationServiceBase implements ITcpMessageListener, ConnectTcpTaskListener, SendTcpDataTaskListener {
+public class LocationService extends LocationServiceBase implements MessengerListener, ITcpMessageListener, ConnectTcpTaskListener, SendTcpDataTaskListener
+{
+
+    public static final String CHANNEL_ID = "LocationServiceChannel";
 
     private static final boolean DEBUG = true;
 
     private static final String CLIENT_TYPE = "CLIENT_TYPE";
+
+    /**
+     * Operacion establecer el mensajero
+     */
+    public static final int OP_SET_MESSENGER = 1;
+
+    /**
+     * Operacion solicitar las ubicaciones
+     */
+    public static final int OP_REQUEST_LOCATION = 2;
+
+    /**
+     *
+     */
+    public static final int OP_NEW_LOCATION_ARRIVE = 3;
+
 
     /**
      * Indica la exactitud de la posicion del gps. El valor de esta variable se lo pasa el activity
@@ -44,9 +75,6 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
      * Nombre de la aplicacion, esta variable se usa en los mensajes toast o log info
      */
     private String appName;
-
-
-    private final IBinder binderToTheClients = new LocalBinder(this);
 
 
     private int clientType;
@@ -75,7 +103,11 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
      */
     private Location previousLocation;
 
+    /**
+     *
+     */
     private long fastestUpdateInterval;
+
 
     /**
      * Proveedor de las ubicaciones. Este cliente se encarga de suministrar las ubicaciones del gps
@@ -144,14 +176,26 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
 
     private long updateInterval;
 
+    /**
+     * Indica si el usuario ha activado que le lleguen las actualizacion de ubicacion a la app
+     */
+    private boolean locationUpdatesRequestOfTheApp;
+
+
+    /**
+     * Mensajero que recibe los
+     */
+    private Messenger messengerToReceiveMessagesFromActivity;
+
+    /**
+     * Mensajero para enviar mensajes a la actividad
+     */
+    private Messenger messengerToSendMessagesToActivity;
+
 
     /**
      * Funciones///////////////////////////////////////////////////////////////////////////////////
      */
-
-
-
-
     /**
      * Crea la tarea para conectar el cliente tcp, este metodo no asegura que la conexion se realice con exito, para ello se debe de
      * // monitorear los eventos del objeto que implementa la interface SendTcpDataTaskListener
@@ -181,6 +225,16 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
 
         }
         else if (this.connectTcpClientTask != null && this.connectTcpClientTask.getStatus() == AsyncTask.Status.PENDING)
+        {
+            this.connectTcpClientTask.cancel(true);
+            this.connectTcpClientTask = new ConnectTcpClientTask(this);
+            this.connectTcpClientTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new TcpClient[]{ tcpClient });
+            if(debug)
+            {
+                Log.d(this.appName, "Launching connecting task, state was pending");
+            }
+        }
+        else if(this.connectTcpClientTask != null && this.connectTcpClientTask.getStatus() == AsyncTask.Status.RUNNING)
         {
             this.connectTcpClientTask.cancel(true);
             this.connectTcpClientTask = new ConnectTcpClientTask(this);
@@ -249,7 +303,7 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
      */
     public boolean addLocationToTheQueue(Location newLocation, Date locationDate, boolean isDifferentFromTheLastLocation, boolean debug)
     {
-        LocationData locationData = new LocationData(this.imeiDouble, this.longitude, this.latitude, (float)this.speed, isDifferentFromTheLastLocation, locationDate);
+        LocationData locationData = new LocationData(this.imeiDouble, newLocation.getLatitude(), newLocation.getLongitude(), newLocation.getSpeed(), isDifferentFromTheLastLocation, locationDate);
         boolean added = this.locationsQueue.offer(locationData);
         if (debug)
         {
@@ -346,7 +400,6 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
             stringBuilder.append("Lost location permission.");
             stringBuilder.append(paramFusedLocationProviderClient);
             Log.e(str, stringBuilder.toString());
-            return;
         }
     }
 
@@ -376,6 +429,15 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
             // Se ejecuta la tarea
             this.sendTcpDataTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, this.timeBetweenSendingTcpDataInMiliSeconds);
         }
+        /*
+        else if(this.sendTcpDataTask != null && this.sendTcpDataTask.getStatus() == AsyncTask.Status.RUNNING && locationsQueue.size() > 0)
+        {
+            this.sendTcpDataTask.cancel(true);
+            boolean isCancelled = sendTcpDataTask.isCancelled();
+            this.sendTcpDataTask = new SendTcpDataTask(this);
+            this.sendTcpDataTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, this.timeBetweenSendingTcpDataInMiliSeconds);
+        }
+        */
     }
 
 
@@ -399,7 +461,10 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
 
     @Override
     public void onSendTcpDataPostExecute(int totalBytesSent) {
-
+        if(this.sendTcpDataTask.getStatus() == AsyncTask.Status.FINISHED)
+        {
+            Toast.makeText(getApplicationContext(), "Send task finished", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -449,6 +514,14 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
     }
 
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Location Service Channel",  NotificationManager.IMPORTANCE_HIGH);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
+    }
+
     /**
      * Eventos/////////////////////////////////////////////////////////////////////////////////////
      */
@@ -456,6 +529,7 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
     /**
      * Evento onCreate, que se dispara al crearse el servicio
      */
+    @Override
     public void onCreate() {
         // Toast
         Toast.makeText(getApplicationContext(), "Creating ubimp service", Toast.LENGTH_LONG).show();
@@ -477,13 +551,27 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
                 boolean locationsAreEquals = setCurrentAndPreviousLocation(locationResult.getLastLocation());
 
                 // Agrega la nueva ubicacion a la cola de ubicaciones
-                addLocationToTheQueue(locationResult.getLastLocation(), new Date(), locationsAreEquals, true);
+                Location lastLocation = locationResult.getLastLocation();
+                addLocationToTheQueue(lastLocation, new Date(), locationsAreEquals, true);
+
 
                 // Si el cliente tcp no se esta conectando, se inicia la tarea para enviar las ubicaciones
-                if (tcpClientConnecting() == false)
+                if (tcpClientConnecting() == false && tcpClient.isClientConnected() == true)
                 {
                     startSendTask(DEBUG);
                 }
+
+                LocationData locationData = new LocationData(lastLocation.getLatitude(), lastLocation.getLongitude(),lastLocation.getSpeed());
+                Message msg = Message.obtain(null, OP_NEW_LOCATION_ARRIVE, locationData);
+                try
+                {
+                    messengerToSendMessagesToActivity.send(msg);
+
+                } catch (RemoteException e)
+                {
+                    e.printStackTrace();
+                }
+
 
             }
         };
@@ -497,8 +585,10 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
     /**
      * Evento que se ejecuta cuando se destruye el servicio
      */
+    @Override
     public void onDestroy()
     {
+        LocationService.ServiceStarted = false;
         if(DEBUG)
         {
             Log.d(this.appName, "On Destroy Service");
@@ -522,16 +612,25 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
      *
      * @param paramIntent
      */
+    @Override
     public void onRebind(Intent paramIntent) {
         Log.i(this.appName, "in onRebind()");
         this.clientsBounded = true;
         super.onRebind(paramIntent);
     }
 
-    public IBinder onBind(Intent paramIntent) {
-        Log.i(this.appName, "On Bind client event");
+
+    @Override
+    public IBinder onBind(Intent paramIntent)
+    {
+        Log.i(this.appName, "Cliente conectado");
         this.clientsBounded = true;
-        return this.binderToTheClients;
+
+        Toast.makeText(getApplicationContext(), "binding", Toast.LENGTH_SHORT).show();
+
+        this.messengerToReceiveMessagesFromActivity = new Messenger(new LocationServiceHandler(this, this));
+        return messengerToReceiveMessagesFromActivity.getBinder();
+
     }
 
     public void onReceiveTcpMessage(String paramString) {}
@@ -544,43 +643,59 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
      * @param startId identificador unico que identifica la solicitud del intento de inicio del servicio
      * @return
      */
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Log.d("Service", "on Start");
+
+        // Se activa la bandera estatica de la clase LocationService para indicar que el servicio se ha iniciado
         LocationService.ServiceStarted = true;
 
         // Si el intento es diferente de null, entonces se obtiene los datos para configurar el cliente
         // tcp y obtener los valores de las de mas variables
-        if (intent != null) {
-            this.appName                = intent.getStringExtra("APP_NAME");
-            this.updateInterval         = intent.getLongExtra("UPDATE_INTERVAL", 10000L);
-            this.fastestUpdateInterval  = intent.getLongExtra("FASTEST_UPDATE_INTERVAL", 5000L);
-            this.accuracy               = intent.getIntExtra("ACCURACY", 100);
-            this.hostname               = intent.getStringExtra("HOSTNAME");
-            this.tcpPort                = intent.getIntExtra("TCP_PORT", 49371);
-            this.imeiDouble             = intent.getDoubleExtra("IMEI_DOUBLE", 0.0D);
-
-            if (this.locationRequest == null) {
+        if (intent != null)
+        {
+            this.appName                = intent.getStringExtra(UbimpServiceSettingsManager.APP_NAME_LABEL);
+            this.updateInterval         = intent.getLongExtra(UbimpServiceSettingsManager.UPDATE_INTERVAL_LABEL, 10000L);
+            this.fastestUpdateInterval  = intent.getLongExtra(UbimpServiceSettingsManager.FASTEST_UPDATE_INTERVAL_LABEL, 5000L);
+            this.accuracy               = intent.getIntExtra(UbimpServiceSettingsManager.ACCURACY_LABEL, 100);
+            this.hostname               = intent.getStringExtra(UbimpServiceSettingsManager.TCP_HOSTNAME_LABEL);
+            this.tcpPort                = intent.getIntExtra(UbimpServiceSettingsManager.TCP_PORT_LABEL, 49371);
+            this.imeiDouble             = intent.getDoubleExtra(UbimpServiceSettingsManager.IMEI_DOUBLE_LABEL, 0.0D);
+            this.locationUpdatesRequestOfTheApp = intent.getBooleanExtra(UbimpServiceSettingsManager.LOCATION_UPDATES_REQUEST_OF_THE_APP_LABEL, false);
+            if (this.locationRequest == null)
+            {
                 this.locationRequest = createLocationRequest(this.updateInterval, this.fastestUpdateInterval, this.accuracy);
                 Toast.makeText(getApplicationContext(), "Starting ubimp service", Toast.LENGTH_LONG).show();
             }
-        } else {
+        }
+        else
+        {
             UbimpServiceSettingsManager ubimpServiceSettingsManager = new UbimpServiceSettingsManager(getApplicationContext());
             this.appName = "Ubimp service";
             this.hostname = ubimpServiceSettingsManager.getHostNameFromSettings("www.ubimp.com");
             this.tcpPort = ubimpServiceSettingsManager.getTcpPortFromSettings(49371);
             this.imeiDouble = ubimpServiceSettingsManager.getImeiDouble();
-            if (this.locationRequest == null) {
+            if (this.locationRequest == null)
+            {
                 this.updateInterval = ubimpServiceSettingsManager.getUpdateInterval(10000L);
                 this.fastestUpdateInterval = ubimpServiceSettingsManager.getFastestUpdateInterval(5000L);
                 this.accuracy = ubimpServiceSettingsManager.getAccuracy(100);
                 this.locationRequest = createLocationRequest(this.updateInterval, this.fastestUpdateInterval, this.accuracy);
             }
 
+            this.locationUpdatesRequestOfTheApp = ubimpServiceSettingsManager.isLocationUpdateRequestOfTheAppEnabled();
             Toast.makeText(getApplicationContext(), "Starting ubimp service", Toast.LENGTH_LONG).show();
         }
 
+        // SOLO PARA FINES DE PRUEBAS <--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.imeiDouble = 1234567890;
+
+
         // Solicita las actualizaciones de las ubicaciones
-        requestLocationUpdates(this.locationRequest, this.locationCallback);
+        if(this.locationUpdatesRequestOfTheApp)
+        {
+            requestLocationUpdates(this.locationRequest, this.locationCallback);
+        }
 
         // Si el cliente tcp es nulo, se procede a instanciarlo
         if (this.tcpClient == null)
@@ -591,14 +706,29 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
         // Se inicia la tarea para conectar a el cliente tcp
         createConnectTcpClientTask(this.tcpClient, true);
 
+
+        createNotificationChannel();
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(this.appName)
+                .setContentText("Ubimp service running")
+                .setSmallIcon(R.drawable.ic_dot)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, notification);
+
         return START_STICKY;
     }
+
 
     /**
      *
      * @param paramIntent
      * @return
      */
+    @Override
     public boolean onUnbind(Intent paramIntent) {
         Log.i(this.appName, "On unbind");
         this.clientsBounded = false;
@@ -607,7 +737,7 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
 
 
     /**
-     * Configura la solicitud de las ubicaciones.
+     * Solicita obtener las ubicaciones
      * @param paramLocationRequest Solicitud de ubicaciones
      * @param paramLocationCallback Llamada cuando se obtenga una nueva ubicacion en caso de que se configure correctamente
      */
@@ -615,7 +745,6 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
         Log.i(this.appName, "Requesting location updates");
         try
         {
-
             this.fusedLocationClient.requestLocationUpdates(paramLocationRequest, paramLocationCallback, Looper.myLooper()).addOnCompleteListener(new OnCompleteListener()
             {
 
@@ -626,19 +755,19 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
                         requestLocationUpdatesDone = true;
                         Toast.makeText(getApplicationContext(), "Ubimp: Requesting location updates success", Toast.LENGTH_LONG).show();
                     }
+                    else
+                    {
+                        Log.d(appName, requestTask.getException().getMessage());
+                        requestLocationUpdatesDone = false;
+                        Context context = getApplicationContext();
+                        StringBuilder stringBuilder = new StringBuilder();
+                        stringBuilder.append("Error requesting location updates");
+                        stringBuilder.append(requestTask.getException().getMessage());
+                        Toast.makeText(context, stringBuilder.toString(), Toast.LENGTH_LONG).show();
+                    }
 
-                    Log.d(appName, requestTask.getException().getMessage());
-                    requestLocationUpdatesDone = false;
-
-                    Context context = getApplicationContext();
-                    StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("Error requesting location updates");
-                    stringBuilder.append(requestTask.getException().getMessage());
-                    Toast.makeText(context, stringBuilder.toString(), Toast.LENGTH_LONG).show();
                 }
             });
-
-            return;
 
         }
         catch (SecurityException paramLocationRequestException)
@@ -649,6 +778,25 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
             stringBuilder.append(paramLocationRequest);
             Log.e(str, stringBuilder.toString());
         }
+    }
+
+
+
+    @Override
+    public void forwardMessage(Message message) {
+
+        switch (message.what)
+        {
+            // Operacion que establece el mensajero para responder a la actividad
+            case OP_SET_MESSENGER:
+                this.messengerToSendMessagesToActivity = message.replyTo;
+                break;
+
+            case OP_REQUEST_LOCATION:
+                this.requestLocationUpdates(this.locationRequest, this.locationCallback);
+                break;
+        }
+
     }
 
 
@@ -706,37 +854,22 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
         }
 
 
-
+        @Override
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             this.connectTcpTaskListener.setConnectingFlag(false);
 
             String str = this.connectTcpTaskListener.getApplicationName();
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("Cliente connected: ");
+            stringBuilder.append("Client connected: ");
             stringBuilder.append(result);
             Log.e(str, stringBuilder.toString());
 
             this.connectTcpTaskListener.onConnectTcpClientTaskResult(result.booleanValue());
         }
 
+        @Override
         protected void onProgressUpdate(Integer... progressUpdate) { super.onProgressUpdate(progressUpdate); }
-    }
-
-
-    public class LocalBinder extends Binder
-    {
-        private LocationService service;
-
-        public LocalBinder(LocationService service)
-        {
-            this.service = service;
-        }
-
-        public LocationService getService()
-        {
-            return this.service;
-        }
     }
 
 
@@ -753,7 +886,7 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
             this.sendTcpDataTaskListener = sendTcpDataTaskListener;
         }
 
-
+        @Override
         protected Integer doInBackground(Integer... timesBetweenSendingTcpDataInMiliSeconds)
         {
 
@@ -778,20 +911,21 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
                     try
                     {
                         byte[] locationBytes;
-                        if (locationData.getChanged())
+                        //if (locationData.getChanged())
                         {
                             locationBytes = locationData.getLocationInByteArrayFormat();
                         }
-                        else
-                        {
-                            locationBytes = locationData.getImeiInArrayFormat();
-                        }
+                        //else
+                        //{
+                          //  locationBytes = locationData.getImeiInArrayFormat();
+                        //}
 
                         numberBytesSent = this.sendTcpDataTaskListener.getTcpClient().sendMessage(locationBytes);
 
                     } catch (IOException e)
                     {
                         e.printStackTrace();
+                        numberBytesSent = 0;
                     }
 
                     // Si el numero de bytes enviados es mayor que cero entonces no hubo error y
@@ -833,18 +967,45 @@ public class LocationService extends LocationServiceBase implements ITcpMessageL
             return totalBytesSent;
         }
 
-
+        @Override
         protected void onPostExecute(Integer totalBytesSent)
         {
             super.onPostExecute(totalBytesSent);
             this.sendTcpDataTaskListener.onSendTcpDataPostExecute(totalBytesSent);
         }
 
-
+        @Override
         protected void onProgressUpdate(Integer... progress)
         {
             super.onProgressUpdate(progress);
             this.sendTcpDataTaskListener.onSendTcpDataProgressUpdate(progress[0]);
+        }
+    }
+
+
+    /**
+     * Manejador de mensajes que se reciben
+     */
+    static class LocationServiceHandler extends Handler
+    {
+        private Context applicationContext;
+
+        private MessengerListener listener;
+
+        LocationServiceHandler(Context context, MessengerListener listener) {
+            applicationContext = context.getApplicationContext();
+            this.listener = listener;
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what)
+            {
+
+                default:
+                    super.handleMessage(msg);
+                    listener.forwardMessage(msg);
+            }
         }
     }
 

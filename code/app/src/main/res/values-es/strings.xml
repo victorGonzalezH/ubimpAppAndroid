@@ -102,4 +102,8 @@
     <string name="cancelLabel">Cancel</string>
     <string name="deviceActivatedSuccessfullyLabel">El dispositivo ha sido activado exitosamente</string>
     <string name="accessFineLocationRationale">El permiso para acceder a la ubicación es necesario para que esta aplicación funcione</string>
+    <string name="descriptionLabel">Servicio de geolocalización de la plataforma Ubimp de la compañía metricsfab</string>
+    <string name="mainDestinationLabel">Estado</string>
+    <string name="locationAvailableLabel">Ubicación disponible</string>
+    <string name="settingsLabel">Configuración</string>
 </resources>

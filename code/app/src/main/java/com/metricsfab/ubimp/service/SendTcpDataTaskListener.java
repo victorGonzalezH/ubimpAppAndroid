@@ -1,6 +1,6 @@
 package com.metricsfab.ubimp.service;
 
-import com.metricsfab.ubimp.models.LocationData;
+import com.metricsfab.ubimp.shared.models.LocationData;
 import com.metricsfab.utils.net.TcpClient;
 
 import java.util.concurrent.BlockingQueue;

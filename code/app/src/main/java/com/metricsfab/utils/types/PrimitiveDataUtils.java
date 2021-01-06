@@ -12,10 +12,15 @@ public class PrimitiveDataUtils {
 
     /**
      * Convierte un valor double a un arreglo de bytes.
-     * @param paramDouble
+     * @param value
      * @return El arreglo de byes que representa el valor double
      */
-    public static byte[] ConvertDoubleToByteArray(double paramDouble) { return ByteBuffer.allocate(SIZE_OF_DOUBLE).putDouble(paramDouble).array(); }
+    public static byte[] ConvertDoubleToByteArray(double value) {
+        byte[] bytes = new byte[8];
+        ByteBuffer bf = java.nio.ByteBuffer.wrap(bytes).putDouble(value);
+        return bf.array();
+        //return ByteBuffer.allocate(SIZE_OF_DOUBLE).putDouble(value).array();
+    }
 
     /**
      * Convierte un valor flotante a un arreglo de bytes

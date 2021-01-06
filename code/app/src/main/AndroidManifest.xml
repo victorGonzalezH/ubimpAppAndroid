@@ -2,12 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:dist="http://schemas.android.com/apk/distribution"
     package="com.metricsfab.ubimpservice">
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_SMS" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,9 +26,10 @@
             </intent-filter>
         </activity>
 
+        <service android:name="com.metricsfab.ubimp.service.LocationService"
+                 android:foregroundServiceType="location"
+            />
     </application>
-
-
     <dist:module dist:instant="true" />
 
 </manifest>

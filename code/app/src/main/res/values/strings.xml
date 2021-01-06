@@ -102,4 +102,9 @@
     <string name="cancelLabel">Cancelar</string>
     <string name="deviceActivatedSuccessfullyLabel">The device was successfully activated</string>
     <string name="accessFineLocationRationale">Access to fine location is needed for core functionality</string>
+    <string name="descriptionLabel">Geolocation service from the Ubimp platform by metricsfab company</string>
+    <string name="mainDestinationLabel">Status</string>
+    <string name="locationAvailableLabel">Location available</string>
+    <string name="settingsLabel">Settings</string>
+
 </resources>
